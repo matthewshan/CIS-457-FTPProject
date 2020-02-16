@@ -1,20 +1,36 @@
-import socket
-import os
+import socket, os, math
 
 HOST = '127.0.0.1'
 PORT = 21
 
 # THIS IS THE CORRECT FILE
 
-
 # Used for RETRIEVE
 def send_file(connection, filename):
+    size = os.path.getsize("./" + filename)
+    print("Help: ", size)
+    connection.sendall(str(size).encode('utf-8'))
+    my_file = open(filename, 'rb')
+    line = my_file.read(1024)
+    i = 0
+    while(line):
+        print(i)
+        i += 1
+        connection.sendall(line)
+        line = my_file.read(1024)
+    my_file.close()
     pass
 
 # Used for STORE
 def receive_file(connection, filename, filesize):
+    print("receive_file")
+    print("expected size: ", filesize)
     to_write = open(filename, "wb")
-    to_write.write(connection.recv(int(filesize)))
+    print("Expected number of transfers: ", math.ceil(int(filesize)/1024))
+    for i in range(math.ceil(int(filesize)/1024)):
+        to_write.write(connection.recv(1024))
+        print(i)
+    to_write.close()
     connection.sendall("File written".encode())
 
 
@@ -37,7 +53,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     with connection:
         while(True):
             rData = connection.recv(1024).decode()
-            connection.sendall(("Received command: " + rData).encode())
+            #connection.sendall(("Received command: " + rData).encode())
+            if rData == '':
+                continue
     
             # If the command given is QUIT, send a goodbye to the client and terminate the connection
             if rData == "QUIT":

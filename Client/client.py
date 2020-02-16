@@ -1,6 +1,4 @@
-import socket
-import sys
-import os
+import socket, os, math, sys
 
 class Connection():
     def __init__(self):
@@ -21,30 +19,43 @@ class Connection():
 
     def list_files(self):
         self.conn.sendall("LIST".encode())
-        print(self.conn.recv(1024).decode())
+        #print(self.conn.recv(1024).decode())
         print(self.conn.recv(1024).decode())
     
     def close(self):    
         self.conn.sendall("QUIT".encode())
-        print(self.conn.recv(1024).decode())
+        #print(self.conn.recv(1024).decode())
         print(self.conn.recv(1024).decode())
         self.conn.close()
     
     def retrieve(self, filename):
         self.conn.sendall(("RETRIEVE " + filename).encode())
-        #TODO: Retrieve file
+        #print(self.conn.recv(1024).decode())
+        to_write = open(filename, "wb")
+        filesize = self.conn.recv(1024).decode('utf-8')
+        print(filesize)
+        print("Expected number of transfers: ", math.ceil(int(filesize)/1024))
+        for i in range(math.ceil(int(filesize)/1024)):
+            to_write.write(self.conn.recv(1024))
+            print(i)
+        to_write.close()
+        print("File received!")
 
     def store(self, filename):
         size = os.path.getsize("./" + filename)
         self.conn.sendall(("STORE " + filename  + " " + str(size)).encode())
-        print(self.conn.recv(1024).decode())
+        #print(self.conn.recv(1024).decode())
 
         my_file = open(filename, 'rb')
-        to_send = b""
-        for line in my_file:
-            to_send += line
+        line = my_file.read(1024)
+        i = 0
+        while(line):
+            print(i)
+            i += 1
+            self.conn.sendall(line)
+            line = my_file.read(1024)
+        my_file.close()
         
-        self.conn.sendall(to_send)
         print(self.conn.recv(1024).decode())
         
 
