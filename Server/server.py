@@ -13,7 +13,10 @@ def send_file(connection, filename):
 
 # Used for STORE
 def receive_file(connection, filename, filesize):
-    pass
+    to_write = open(filename, "wb")
+    to_write.write(connection.recv(int(filesize)))
+    connection.sendall("File written".encode())
+
 
 # Used for LIST
 def list_files(connection):

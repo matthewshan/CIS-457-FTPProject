@@ -37,10 +37,15 @@ class Connection():
     def store(self, filename):
         size = os.path.getsize("./" + filename)
         self.conn.sendall(("STORE " + filename  + " " + str(size)).encode())
+        print(self.conn.recv(1024).decode())
+
         my_file = open(filename, 'rb')
+        to_send = b""
+        for line in my_file:
+            to_send += line
         
-        self.conn.sendall(())
-        #TODO: Send the file
+        self.conn.sendall(to_send)
+        print(self.conn.recv(1024).decode())
         
 
 connection = Connection()
