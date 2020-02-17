@@ -1,4 +1,4 @@
-import socket, os, math, sys
+import socket, os, math, sys, traceback
 
 class Connection():
     def __init__(self):
@@ -28,11 +28,20 @@ class Connection():
         print(self.conn.recv(1024).decode())
         self.conn.close()
     
+    # RETRIEVE [s], r, r(n)
     def retrieve(self, filename):
+        #Send the initial
         self.conn.sendall(("RETRIEVE " + filename).encode())
-        #print(self.conn.recv(1024).decode())
+
+        #Checks to see if the server is ready
+        code = self.conn.recv(1024).decode()
+        if(code == "ERROR"):
+            print("Issue openning that file. Make sure that it is on the server")
+            return
+
+        #Start writing the file
         to_write = open(filename, "wb")
-        filesize = self.conn.recv(1024).decode('utf-8')
+        filesize = code
         print(filesize)
         print("Expected number of transfers: ", math.ceil(int(filesize)/1024))
         for i in range(math.ceil(int(filesize)/1024)):
@@ -41,47 +50,68 @@ class Connection():
         to_write.close()
         print("File received!")
 
+    # STORE [s], s(n), r
     def store(self, filename):
-        size = os.path.getsize("./" + filename)
-        self.conn.sendall(("STORE " + filename  + " " + str(size)).encode())
-        #print(self.conn.recv(1024).decode())
+        #Checks to see if the file exists before sending requests
+        try: 
+            size = os.path.getsize("./" + filename)
+        except FileNotFoundError:
+            print("File not found. Please try again")
+            return
 
+        #Sends are store request
+        self.conn.sendall(("STORE " + filename  + " " + str(size)).encode())
+
+        # When ready, 
         my_file = open(filename, 'rb')
         line = my_file.read(1024)
         i = 0
         while(line):
-            print(i)
+            print(i) #TODO: Delete
             i += 1
             self.conn.sendall(line)
             line = my_file.read(1024)
+
         my_file.close()
         
+        # Recieve confirmation
         print(self.conn.recv(1024).decode())
         
 
 connection = Connection()
-while True:
-    commands = str(input("\nftp> "))
-    commands = commands.split(" ")
-    if(len(commands) == 0):
-        print("Invalid command, please try again")
-    else:
-        if commands[0] == "CONNECT":
-            if len(commands) == 1:
-                commands.append("localhost")
-                commands.append("21")
-            connection.connect(commands[1], int(commands[2]))
-            print("Connection Formed with " + commands[1] + ":" + commands[2])
-        elif commands[0] == "LIST":
-            connection.list_files()
-        elif commands[0] == "RETRIEVE":
-            connection.retrieve(commands[1])
-        elif commands[0] == "STORE":
-            connection.store(commands[1])
-        elif commands[0] == "QUIT":
-            connection.close()
-            break
-        elif commands[0] == "TEST":
-            connection.test()
-        else:
-            print("Invalid command")
+try:
+    cli = "\nftp> "
+    while True:
+        commands = str(input(cli))
+        commands = commands.split(" ")
+        commands[0] = commands[0].upper() 
+        if(len(commands) == 0):
+            print("Invalid command, please try again")
+            continue
+
+        if connection.connected:
+            if commands[0] == "LIST":
+                connection.list_files()
+            elif commands[0] == "RETRIEVE":
+                connection.retrieve(commands[1])
+            elif commands[0] == "STORE":
+                connection.store(commands[1])
+            elif commands[0] == "QUIT":
+                connection.close()
+                connection = Connection()
+                break
+            else:
+                print("Invalid command! Valid commands: QUIT, LIST, STORE, RETRIEVE")
+        else:        
+            if commands[0] == "CONNECT":
+                if len(commands) == 1:
+                    commands.append("localhost")
+                    commands.append("21")
+                connection.connect(commands[1], int(commands[2]))
+                print("Connection Formed with " + commands[1] + ":" + commands[2])
+                cli =  "\n[" + commands[1] + ":" + commands[2] + "] ftp> "
+            else:
+                print("Please CONNECT to a server before preforming commands")
+except:
+    connection.close()
+    traceback.print_exc(file=sys.stdout)
