@@ -1,7 +1,7 @@
 import socket, os, math
 
 HOST = '127.0.0.1'
-PORT = 21
+PORT = 2000
 
 # THIS IS THE CORRECT FILE
 
@@ -16,18 +16,17 @@ def send_file(connection, filename):
         return
 
     # Send the size of the file 
-    print("Help: ", size)
+    print("Size of file being sent: ", size)
     connection.sendall(str(size).encode())
     my_file = open(filename, 'rb')
 
     #Start sending the file
     line = my_file.read(1024)
-    i = 0
+    payload = line
     while(line):
-        print(i)
-        i += 1
-        connection.sendall(line)
         line = my_file.read(1024)
+        payload += line
+    connection.sendall(payload)
     my_file.close()
 
 # STORE [r], r(n), s
@@ -38,9 +37,11 @@ def accept_file(connection, filename, filesize):
     # Write the file 
     to_write = open(filename, "wb")
     print("Expected number of transfers: ", math.ceil(int(filesize)/1024))
-    for i in range(math.ceil(int(filesize)/1024)):
+    """ for i in range(math.ceil(int(filesize)/1024)):
         to_write.write(connection.recv(1024)) 
-        print(i) #TODO: Delete
+        print(i) #TODO: Delete """
+    payload = connection.recv(int(filesize), socket.MSG_WAITALL)
+    to_write.write(payload) 
     to_write.close()
 
     #Send confirmation

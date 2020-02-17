@@ -42,11 +42,9 @@ class Connection():
         #Start writing the file
         to_write = open(filename, "wb")
         filesize = code
-        print(filesize)
-        print("Expected number of transfers: ", math.ceil(int(filesize)/1024))
-        for i in range(math.ceil(int(filesize)/1024)):
-            to_write.write(self.conn.recv(1024))
-            print(i)
+        print("File size to receive: ", filesize)
+        payload = connection.recv(int(filesize), socket.MSG_WAITALL)
+        to_write.write(payload) 
         to_write.close()
         print("File received!")
 
@@ -64,13 +62,16 @@ class Connection():
 
         # When ready, 
         my_file = open(filename, 'rb')
-        line = my_file.read(1024)
-        i = 0
+        line = my_file.read(int(size))
+        file_load = line
         while(line):
-            print(i) #TODO: Delete
-            i += 1
-            self.conn.sendall(line)
-            line = my_file.read(1024)
+            line = my_file.read(int(size))
+            file_load += line
+        print(file_load)
+        self.conn.sendall(file_load)
+        # i = 0
+        # for i in range(size / 1024):
+        #     line += my_file.read(1024)
 
         my_file.close()
         
