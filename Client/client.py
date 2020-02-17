@@ -19,12 +19,10 @@ class Connection():
 
     def list_files(self):
         self.conn.sendall("LIST".encode())
-        #print(self.conn.recv(1024).decode())
         print(self.conn.recv(1024).decode())
     
     def close(self):    
         self.conn.sendall("QUIT".encode())
-        #print(self.conn.recv(1024).decode())
         print(self.conn.recv(1024).decode())
         self.conn.close()
     
@@ -43,12 +41,12 @@ class Connection():
         to_write = open(filename, "wb")
         filesize = code
         print("File size to receive: ", filesize)
-        payload = connection.recv(int(filesize), socket.MSG_WAITALL)
+        payload = self.conn.recv(int(filesize), socket.MSG_WAITALL)
         to_write.write(payload) 
         to_write.close()
-        print("File received!")
+        print("File written")
 
-    # STORE [s], s(n), r
+    # STORE
     def store(self, filename):
         #Checks to see if the file exists before sending requests
         try: 
@@ -67,11 +65,7 @@ class Connection():
         while(line):
             line = my_file.read(int(size))
             file_load += line
-        print(file_load)
         self.conn.sendall(file_load)
-        # i = 0
-        # for i in range(size / 1024):
-        #     line += my_file.read(1024)
 
         my_file.close()
         
@@ -105,12 +99,16 @@ try:
                 print("Invalid command! Valid commands: QUIT, LIST, STORE, RETRIEVE")
         else:        
             if commands[0] == "CONNECT":
-                if len(commands) == 1:
-                    commands.append("localhost")
-                    commands.append("21")
-                connection.connect(commands[1], int(commands[2]))
-                print("Connection Formed with " + commands[1] + ":" + commands[2])
-                cli =  "\n[" + commands[1] + ":" + commands[2] + "] ftp> "
+                try:
+                    if len(commands) == 1:
+                        commands.append("localhost")
+                        commands.append("21")
+                    connection.connect(commands[1], int(commands[2]))
+                    print("Connection Formed with " + commands[1] + ":" + commands[2])
+                    cli =  "\n[" + commands[1] + ":" + commands[2] + "] ftp> "
+                except:
+                    connection = Connection()
+                    print("There was an issue connecting. Retry.")
             else:
                 print("Please CONNECT to a server before preforming commands")
 except:

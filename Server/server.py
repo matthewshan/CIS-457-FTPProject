@@ -31,8 +31,6 @@ def send_file(connection, filename):
 
 # STORE [r], r(n), s
 def accept_file(connection, filename, filesize):
-    print("receive_file") #TODO: Delete
-    print("expected size: ", filesize) #TODO: Delete
 
     # Write the file 
     to_write = open(filename, "wb")
