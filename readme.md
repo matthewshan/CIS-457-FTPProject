@@ -11,7 +11,7 @@ git clone [GitHub Repo]
 
 **Important: Make sure you pull from master when there are updates, *especially* before created a new pull request.**
 
-Merges the remote master branch with your current branch
+Pulls the remote branch of master
 ```
 git pull origin master 
 ```
